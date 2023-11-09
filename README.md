@@ -85,7 +85,8 @@
         {
             step();
             put_beeper();
-            step();
+            if(front_is_clear())
+                step();
         }
         if(left_is_blocked())
             break;
@@ -94,20 +95,26 @@
         step();
         turn_left();
         while(front_is_clear())
+            step();
+        turn_left();
+        turn_left();
+
+        while(front_is_clear())
         {
             put_beeper();
             step();
-            step();
+            if(front_is_clear())
+                step();
         }
-        put_beeper();
-        if(right_is_blocked())
+        //put_beeper();
+        if(left_is_blocked())
             break;
 
         turn_left();
-        turn_left();
-        turn_left();
         step();
         turn_left();
+        while(front_is_clear())
+            step();
         turn_left();
         turn_left();
     }
