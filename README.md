@@ -3,7 +3,8 @@
  ROUND 1 - KAREL
  
 // stairs
-while(1)
+
+    while(1)
     {
         while(beepers_present())
             pick_beeper();
@@ -39,9 +40,9 @@ while(1)
     }
 
 
-// olympics
+ olympics
 
-while(1)
+    while(1)
     {
         while(!facing_north())
             turn_left();
@@ -189,51 +190,51 @@ while(1)
 
   // go to center
 
-     while(!facing_south())
-       turn_left();
-   while(front_is_clear())
-       step();
-   turn_right();
-   while(front_is_clear())
-       step();
-   turn_left();
-   turn_left();
-
-
-   put_beeper();
-   while(front_is_clear())
-       step();
-   put_beeper();
-   turn_left();
-   turn_left();
-   step();
-   while(1)
-   {
-       while(no_beepers_present())
-           step();
-       turn_left();
-       turn_left();
-       step();
-       if(beepers_present())
-           break;
-       put_beeper();
-       step();
-   }
-   put_beeper();
-   while(front_is_clear())
-       step();
-   turn_left();
-   turn_left();
-   while(front_is_clear())
-   {
-       pick_beeper();
-       step();
-   }
-   pick_beeper();
-   turn_left();
-   turn_left();
-   while(no_beepers_present())
-       step();
+    while(!facing_south())
+        turn_left();
+    while(front_is_clear())
+        step();
+    turn_right();
+    while(front_is_clear())
+        step();
+    turn_left();
+    turn_left();
+ 
+ 
+    put_beeper();
+    while(front_is_clear())
+        step();
+    put_beeper();
+    turn_left();
+    turn_left();
+    step();
+    while(1)
+    {
+        while(no_beepers_present())
+            step();
+        turn_left();
+        turn_left();
+        step();
+        if(beepers_present())
+            break;
+        put_beeper();
+        step();
+    }
+    put_beeper();
+    while(front_is_clear())
+        step();
+    turn_left();
+    turn_left();
+    while(front_is_clear())
+    {
+        pick_beeper();
+        step();
+    }
+    pick_beeper();
+    turn_left();
+    turn_left();
+    while(no_beepers_present())
+        step();
 
 
     while(!facing_north())
