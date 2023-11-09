@@ -273,3 +273,22 @@
     while(no_beepers_present())
         step();
     pick_beeper();
+
+  move beepers
+  
+    while(beepers_present())
+    {
+        pick_beeper();
+        while(front_is_clear())
+            step();
+        put_beeper();
+        turn_left();
+        turn_left();
+        while(front_is_clear())
+            step();
+        turn_left();
+        turn_left();
+    }
+
+    while(front_is_clear())
+        step();
