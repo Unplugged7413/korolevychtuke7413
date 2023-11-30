@@ -144,25 +144,6 @@ int all_positives(const int size, const int array[]){
     return 1;
 }
 
-int last_positive(const int size, const int array[]){
-    if(array == NULL){
-        return -1;
-    }
-
-    int max_positive = 0;
-    for (int i = 0; i < size; i++)
-    {
-        if (array[i] > max_positive)
-        {
-            max_positive = array[i];
-        }
-    }
-    if(max_positive == 0)
-    {
-        return -1;
-    }
-    return max_positive;
-}
 
 int binary_num(const int num){
     if(num == 1 || num == 0)
