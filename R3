@@ -1,0 +1,178 @@
+#include <stdio.h>
+#include <ctype.h>
+
+//task1
+int max_2d(const int size, int array[][size])
+{
+	if (array == NULL)
+    {
+        return -1;
+    }
+    int max = array[0][0];
+	for(int i = 0; i < size; i++){
+		for(int j = 0; j < size; j++){
+			if(array[i][j] > max){
+				max = array[i][j];
+			}
+		}
+	}
+    return max;
+}
+//task2
+int vowels_count_2d(const int rows, const int cols, char strings[][cols])
+{
+    if (strings == NULL)
+    {
+        return -1;
+    }
+
+    int count = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols && strings[i][j] != '\0'; j++)
+        {
+            char c = tolower(strings[i][j]);
+            if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u')
+            {
+                count++;
+            }
+        }
+    }
+
+    return count;
+}
+//task3
+int is_in_array_2d(const int num, const int size, int array[][size])
+{
+    if (array == NULL)
+    {
+        return -1;
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            if (array[i][j] == num)
+            {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+//task4
+int largest_line(const int size, int array[][size])
+{
+    if (array == NULL)
+    {
+        return -1;
+    }
+
+    int maxSum = 0;
+    int maxIndex = -1;
+
+    for (int i = 0; i < size; i++)
+    {
+        int currentSum = 0;
+
+        for (int j = 0; j < size; j++)
+        {
+            currentSum += array[i][j];
+        }
+
+
+        if (i == 0 || currentSum > maxSum)
+        {
+            maxSum = currentSum;
+            maxIndex = i;
+        }
+    }
+
+    return maxIndex;
+}
+//task5
+void swap_case_2d(const int rows, const int cols, char strings[][cols])
+{
+    if (strings == NULL)
+    {
+        return;
+    }
+
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols && strings[i][j] != '\0'; j++)
+        {
+            if (isupper(strings[i][j]))
+            {
+                strings[i][j] = tolower(strings[i][j]);
+            }
+            else if (islower(strings[i][j]))
+            {
+                strings[i][j] = toupper(strings[i][j]);
+            }
+        }
+    }
+}
+//task6
+int largest_col(const int size, int array[][size])
+{
+    if (array == NULL)
+    {
+        return -1;
+    }
+
+    int maxSum = 0;
+    int maxIndex = -1;
+
+    for (int j = 0; j < size; j++)
+    {
+        int currentSum = 0;
+
+        for (int i = 0; i < size; i++)
+        {
+            currentSum += array[i][j];
+        }
+
+        if (j == 0 || currentSum > maxSum)
+        {
+            maxSum = currentSum;
+            maxIndex = j;
+        }
+    }
+
+    return maxIndex;
+}
+//task7
+int count_zeroes_2d(const int size, int array[][size]) {
+    if (array == NULL) {
+        return -1;
+    }
+    int count = 0;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            if (array[i][j] == 0) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+//task8
+void swap_sign_2d(const int size, char array[][size])
+{
+    if (array == NULL)
+    {
+        return;
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            array[i][j] = -array[i][j];
+        }
+    }
+}
