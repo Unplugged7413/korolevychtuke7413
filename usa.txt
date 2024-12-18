@@ -1448,3 +1448,30 @@ void BVSPrintTree(PtrBVSNode Root)
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+teoria:
+BVS - Binárny vyhľadávací strom je dátová štruktúra, kde každý uzol má maximálne dvoch potomkov. Pre každý uzol platí, že všetky hodnoty v ľavom podstrome sú menšie a všetky hodnoty v pravom podstrome sú väčšie ako hodnota samotného uzla.
+
+Hash tabuľka s metódou oddelených reťazcov - Dátová štruktúra umožňujúca rýchly prístup k dátam pomocou hash funkcie, ktorá premení kľúč na index v poli. Kolízie sa riešia pomocou spojových zoznamov (reťazcov) pre každý index.
+
+Spojový zoznam - Lineárna dátová štruktúra, kde každý prvok obsahuje dáta a ukazovateľ na nasledujúci prvok v zozname.
+
+Fronta - Abstraktný dátový typ, ktorý funguje na princípe FIFO (First-In-First-Out). Prvky sa pridávajú na koniec fronty a odoberajú z jej začiatku.
+
+Bublinové triedenie - Jednoduchý algoritmus, ktorý opakovane prechádza zoznam a vymieňa susediace prvky, ak sú v nesprávnom poradí.
+
+Vkladacie triedenie - Algoritmus, ktorý buduje zoradený zoznam postupným vkladaním nových prvkov do správnej pozície.
+
+Výberové triedenie - Algoritmus, ktorý opakovane vyberá najmenší (alebo najväčší) prvok z nezoradeného podzoznamu a presúva ho na začiatok.
+
+Radixné triedenie - Algoritmus, ktorý triedi prvky podľa jednotlivých cifier, začínajúc od najmenej významnej.
