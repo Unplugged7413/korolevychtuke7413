@@ -1,0 +1,1455 @@
+lstack.c:
+// SS 2019, KPI FEI TUKE
+
+#include "lstack.h" // Zahrnutie hlavičkového súboru pre zásobník
+#include "err.h"    // Zahrnutie hlavičkového súboru pre spracovanie chýb
+#include <stdlib.h> // Zahrnutie štandardnej knižnice pre dynamickú pamäť
+
+struct Node
+{
+    PNode	Next; // Ukazovateľ na ďalší uzol v zásobníku
+    TElem	Elem; // Uložený prvok v uzle
+};
+
+struct LnkStack
+{
+    PNode	First; // Ukazovateľ na prvý uzol zásobníka
+    PNode	Last;  // Ukazovateľ na posledný uzol zásobníka
+};
+
+int IsEmptyStack( LStack S )
+{
+    if(S == NULL) Error("IsEmptyStack: incorrect stack!"); // Kontrola, či zásobník nie je NULL
+    return S->First == NULL; // Vrátiť TRUE, ak je zásobník prázdny
+}
+
+LStack CreateStack( void )
+{
+    LStack S; // Deklarácia zásobníka
+    S = malloc(sizeof(struct LnkStack)); // Alokácia pamäte pre zásobník
+    if(S == NULL) Error("CreateStack: out of memory!"); // Kontrola alokácie pamäte
+    S->First = NULL; // Inicializácia prvého uzla na NULL
+    S->Last = NULL;  // Inicializácia posledného uzla na NULL
+    return S; // Vrátiť vytvorený zásobník
+}
+
+// Removes a stack
+// Receives a pointer to LStack, not LStack itself
+void RemoveStack( LStack *PS )
+{
+    if(PS == NULL) Error("RemoveStack: incorrect pointer!"); // Kontrola, či ukazovateľ nie je NULL
+    if(*PS == NULL) return; // Ak je zásobník už NULL, nič nerobiť
+    LStack S = *PS; // Dereferencovanie ukazovateľa na zásobník
+    MakeEmptyStack(S); // Vyprázdniť zásobník
+    free(S); // Uvoľniť pamäť zásobníka
+    *PS = NULL; // Nastaviť pôvodný ukazovateľ na NULL
+}
+
+void MakeEmptyStack( LStack S )
+{
+    if(S == NULL) Error("MakeEmptyStack: incorrect stack!"); // Kontrola, či zásobník nie je NULL
+    while(!IsEmptyStack(S)) // Pokračovať, kým zásobník nie je prázdny
+        Pop(S); // Odstrániť vrchol zásobníka
+}
+
+// Inserting element to the beginning of a list
+void Push( TElem X, LStack S )
+{
+    PNode PNew; // Deklarácia nového uzla
+    if(S == NULL) Error("Push: incorrect stack!"); // Kontrola, či zásobník nie je NULL
+    PNew = malloc(sizeof(struct Node)); // Alokácia pamäte pre nový uzol
+    if(PNew == NULL) Error("Push: out of memory!"); // Kontrola alokácie pamäte
+    PNew->Elem = X; // Nastavenie prvku v novom uzle
+    PNew->Next = S->First; // Nastavenie ukazovateľa na ďalší uzol
+    if(IsEmptyStack(S)) S->Last = PNew; // Ak je zásobník prázdny, posledný uzol je nový uzol
+    S->First = PNew; // Nastavenie prvého uzla na nový uzol
+}
+
+// Top of the stack at the beginning of a list
+TElem Top( LStack S )
+{
+    if(S == NULL) Error("Top: incorrect stack!"); // Kontrola, či zásobník nie je NULL
+    if(!IsEmptyStack(S)) return S->First->Elem; // Vrátiť prvý prvok, ak zásobník nie je prázdny
+    Error("Top: stack empty!"); // Chybové hlásenie, ak je zásobník prázdny
+    return 0; // Vrátiť 0 ako predvolenú hodnotu
+}
+
+// TOS at the beginning of a list
+void Pop( LStack S )
+{
+    if(S == NULL) Error("Pop: incorrect stack!"); // Kontrola, či zásobník nie je NULL
+    if(IsEmptyStack(S)) printf("\nPop: empty stack"); // Výpis správy, ak je zásobník prázdny
+    else{
+        PNode PTop = S->First; // Uloženie ukazovateľa na prvý uzol
+        if(S->First == S->Last) S->Last = NULL; // Ak je iba jeden uzol, nastaviť posledný na NULL
+        S->First = S->First->Next; // Posunúť prvý ukazovateľ na ďalší uzol
+        free(PTop); // Uvoľniť pamäť starého prvého uzla
+    }
+}
+
+// Prints elements in the stack S
+void PrintStack( LStack S )
+{
+    if(S == NULL) Error("PrintStack: incorrect stack!"); // Kontrola, či zásobník nie je NULL
+    if(IsEmptyStack(S)) printf("Empty stack"); // Výpis, ak je zásobník prázdny
+    else{
+        PNode PTmp = S->First; // Dočasný ukazovateľ na prechádzanie zásobníka
+        printf("Top> "); // Výpis začiatku zásobníka
+        while(PTmp != NULL){ // Prechádzanie cez všetky uzly
+            printf("%d ", PTmp->Elem); // Výpis prvku uzla
+            PTmp = PTmp->Next; // Posun na ďalší uzol
+        }
+    }
+}
+
+
+
+traverse.c:
+#include <stdio.h>               // Zahrnutie štandardnej knižnice pre vstup/výstup
+#include <limits.h>              // Zahrnutie hlavičkového súboru pre limity celočíselných typov
+#include <stdbool.h>             // Zahrnutie hlavičkového súboru pre typ bool
+#include "traverse.h"            // Zahrnutie vlastného hlavičkového súboru pre prechody stromov
+#include "lstack.h"              // Zahrnutie vlastného hlavičkového súboru pre zásobník
+
+#define MAX_NODES 1000           // Definícia maximálneho počtu uzlov v strome
+#define INVALID_NODE -1          // Definícia neplatného uzla
+
+static int *hodnota;  // hodnota = value; // Ukazovateľ na pole hodnôt uzlov
+static int *lavy;     // lavy = left;    // Ukazovateľ na pole ľavých detí
+static int *stredny;  // stredny = middle; // Ukazovateľ na pole stredných detí (pre ternárne stromy)
+static int *pravy;    // pravy = right;  // Ukazovateľ na pole pravých detí
+
+// Nastavenie binárneho stromu
+void SetBT(int* V, int* L, int* R)
+{
+    hodnota = V; // Priradenie poľa hodnôt
+    lavy = L;     // Priradenie poľa ľavých detí
+    pravy = R;    // Priradenie poľa pravých detí
+}
+
+// Rekurzívna metóda pre inorder prechod
+void inorder(int koren)
+{
+    if (koren == 0 || koren >= MAX_NODES) // Kontrola platnosti koreňa
+    {
+        return; // Ukončenie, ak je koreň neplatný
+    }
+
+    inorder(lavy[koren]);                    // Rekurzívne prechádzanie ľavého podstromu
+    printf("%d ", hodnota[koren]);          // Výpis hodnoty aktuálneho uzla
+    inorder(pravy[koren]);                   // Rekurzívne prechádzanie pravého podstromu
+}
+
+// Rekurzívna metóda pre preorder prechod
+void preorder(int koren)
+{
+    if (koren == 0 || koren >= MAX_NODES) // Kontrola platnosti koreňa
+    {
+        return; // Ukončenie, ak je koreň neplatný
+    }
+
+    printf("%d ", hodnota[koren]);          // Výpis hodnoty aktuálneho uzla
+    preorder(lavy[koren]);                   // Rekurzívne prechádzanie ľavého podstromu
+    preorder(pravy[koren]);                  // Rekurzívne prechádzanie pravého podstromu
+}
+
+// Rekurzívna metóda pre postorder prechod
+void postorder(int koren)
+{
+    if (koren == 0 || koren >= MAX_NODES) // Kontrola platnosti koreňa
+    {
+        return; // Ukončenie, ak je koreň neplatný
+    }
+
+    postorder(lavy[koren]);                  // Rekurzívne prechádzanie ľavého podstromu
+    postorder(pravy[koren]);                 // Rekurzívne prechádzanie pravého podstromu
+    printf("%d ", hodnota[koren]);          // Výpis hodnoty aktuálneho uzla
+}
+
+// Nerekurzívna metóda pre inorder prechod
+void inorderNR(int v)
+{
+    LStack zasobnik = CreateStack(); // Vytvorenie zásobníka
+    if (zasobnik == NULL)             // Kontrola úspešnosti vytvorenia zásobníka
+    {
+        printf("Chyba: Nepodarilo sa vytvoriť zásobník\n"); // Výpis chybovej správy
+        return; // Ukončenie funkcie
+    }
+
+    while (true) // Nekonečný cyklus pre prechod stromom
+    {
+        while (v != 0 && v < MAX_NODES) // Prechádzanie ľavými uzlami
+        {
+            Push(v, zasobnik); // Vloženie aktuálneho uzla na zásobník
+            v = lavy[v];       // Prechod na ľavé dieťa
+        }
+
+        if (IsEmptyStack(zasobnik)) // Kontrola, či je zásobník prázdny
+        {
+            break; // Ukončenie cyklu, ak je zásobník prázdny
+        }
+
+        v = Top(zasobnik); // Získanie vrcholu zásobníka
+        Pop(zasobnik);     // Odstránenie vrcholu zo zásobníka
+
+        printf("%d ", hodnota[v]); // Výpis hodnoty aktuálneho uzla
+        v = pravy[v];               // Prechod na pravé dieťa
+    }
+
+    RemoveStack(&zasobnik); // Uvoľnenie zásobníka
+}
+
+// Nerekurzívna metóda pre preorder prechod
+void preorderNR(int v)
+{
+    if (v == 0 || v >= MAX_NODES) // Kontrola platnosti koreňa
+    {
+        printf("Strom je prázdny alebo neplatný koreň\n"); // Výpis chybovej správy
+        return; // Ukončenie funkcie
+    }
+
+    LStack zasobnik = CreateStack(); // Vytvorenie zásobníka
+    if (zasobnik == NULL)             // Kontrola úspešnosti vytvorenia zásobníka
+    {
+        printf("Chyba: Nepodarilo sa vytvoriť zásobník\n"); // Výpis chybovej správy
+        return; // Ukončenie funkcie
+    }
+
+    Push(v, zasobnik); // Vloženie koreňa na zásobník
+
+    while (!IsEmptyStack(zasobnik)) // Pokračovanie, kým zásobník nie je prázdny
+    {
+        v = Top(zasobnik); // Získanie vrcholu zásobníka
+        Pop(zasobnik);     // Odstránenie vrcholu zo zásobníka
+
+        printf("%d ", hodnota[v]); // Výpis hodnoty aktuálneho uzla
+
+        if (pravy[v] != 0 && pravy[v] < MAX_NODES) // Kontrola pravého dieťaťa
+        {
+            Push(pravy[v], zasobnik); // Vloženie pravého dieťaťa na zásobník
+        }
+        if (lavy[v] != 0 && lavy[v] < MAX_NODES) // Kontrola ľavého dieťaťa
+        {
+            Push(lavy[v], zasobnik); // Vloženie ľavého dieťaťa na zásobník
+        }
+    }
+
+    RemoveStack(&zasobnik); // Uvoľnenie zásobníka
+}
+
+// Metóda pre level-order prechod
+void levelorder(int koren)
+{
+    if (koren == 0 || koren >= MAX_NODES) // Kontrola platnosti koreňa
+    {
+        printf("Strom je prázdny alebo neplatný koreň\n"); // Výpis chybovej správy
+        return; // Ukončenie funkcie
+    }
+
+    int front = 0, rear = 0;         // Inicializácia frontu a zadku fronty
+    int queue[MAX_NODES];            // Pole pre implementáciu fronty
+
+    queue[rear++] = koren;            // Vloženie koreňa do fronty
+
+    while (front < rear) // Pokračovanie, kým fronta nie je prázdna
+    {
+        int v = queue[front++]; // Odstránenie prvého prvku z fronty
+
+        printf("%d ", hodnota[v]); // Výpis hodnoty aktuálneho uzla
+
+        if (lavy[v] != 0 && lavy[v] < MAX_NODES) // Kontrola ľavého dieťaťa
+        {
+            if (rear >= MAX_NODES) // Kontrola, či je fronta plná
+            {
+                printf("Chyba: Fronta je plná\n"); // Výpis chybovej správy
+                return; // Ukončenie funkcie
+            }
+            queue[rear++] = lavy[v]; // Vloženie ľavého dieťaťa do fronty
+        }
+
+        if (pravy[v] != 0 && pravy[v] < MAX_NODES) // Kontrola pravého dieťaťa
+        {
+            if (rear >= MAX_NODES) // Kontrola, či je fronta plná
+            {
+                printf("Chyba: Fronta je plná\n"); // Výpis chybovej správy
+                return; // Ukončenie funkcie
+            }
+            queue[rear++] = pravy[v]; // Vloženie pravého dieťaťa do fronty
+        }
+    }
+}
+
+// Nastavenie ternárneho stromu
+void SetTT(int* V, int* L, int* M, int* R)
+{
+    hodnota = V;    // Priradenie poľa hodnôt
+    lavy = L;        // Priradenie poľa ľavých detí
+    stredny = M;     // Priradenie poľa stredných detí
+    pravy = R;       // Priradenie poľa pravých detí
+}
+
+// Kontrola platnosti uzla
+bool je_platny_uzol(int uzol)
+{
+    return (uzol > 0 && uzol < MAX_NODES && hodnota[uzol] != INT_MIN); // Overenie, či je uzol v platnom rozsahu a má platnú hodnotu
+}
+
+// Preorder prechod pre ternárny strom
+void preorderTT(int koren)
+{
+    if (!je_platny_uzol(koren)) // Kontrola platnosti koreňa
+    {
+        return; // Ukončenie, ak je koreň neplatný
+    }
+
+    printf("%d ", hodnota[koren]);          // Výpis hodnoty aktuálneho uzla
+
+    preorderTT(lavy[koren]);                 // Rekurzívne prechádzanie ľavého podstromu
+    preorderTT(stredny[koren]);              // Rekurzívne prechádzanie stredného podstromu
+    preorderTT(pravy[koren]);                // Rekurzívne prechádzanie pravého podstromu
+}
+
+// Postorder prechod pre ternárny strom
+void postorderTT(int koren)
+{
+    if (!je_platny_uzol(koren)) // Kontrola platnosti koreňa
+    {
+        return; // Ukončenie, ak je koreň neplatný
+    }
+
+    postorderTT(lavy[koren]);                // Rekurzívne prechádzanie ľavého podstromu
+    postorderTT(stredny[koren]);             // Rekurzívne prechádzanie stredného podstromu
+    postorderTT(pravy[koren]);               // Rekurzívne prechádzanie pravého podstromu
+
+    printf("%d ", hodnota[koren]);          // Výpis hodnoty aktuálneho uzla
+}
+
+// Inicializácia stromu
+void inicializovat_strom()
+{
+    for (int i = 0; i < MAX_NODES; i++) // Prechod cez všetky možné uzly
+    {
+        hodnota[i] = INT_MIN;          // Nastavenie hodnoty na neplatnú hodnotu
+        lavy[i] = INVALID_NODE;        // Nastavenie ľavého dieťaťa na neplatný uzol
+        stredny[i] = INVALID_NODE;     // Nastavenie stredného dieťaťa na neplatný uzol
+        pravy[i] = INVALID_NODE;       // Nastavenie pravého dieťaťa na neplatný uzol
+    }
+}
+
+// Pridanie uzla do stromu
+void pridat_uzol(int uzol, int val, int l, int m, int r)
+{
+    if (uzol <= 0 || uzol >= MAX_NODES) // Kontrola platnosti indexu uzla
+    {
+        printf("Chyba: Neplatný index uzla %d\n", uzol); // Výpis chybovej správy
+        return; // Ukončenie funkcie
+    }
+    hodnota[uzol] = val; // Nastavenie hodnoty uzla
+    lavy[uzol] = l;       // Nastavenie ľavého dieťaťa uzla
+    stredny[uzol] = m;    // Nastavenie stredného dieťaťa uzla
+    pravy[uzol] = r;      // Nastavenie pravého dieťaťa uzla
+}
+
+
+
+
+binkoef.c:
+#include "binkoef.h" // Zahrnutie vlastného hlavičkového súboru pre binomické koeficienty
+
+// Funkcia na výpočet binomického koeficientu pomocou rekurzie (Rozdeliť a panuj)
+int BinKoefDnC(int n, int k){
+    if(k == 0 || k == n) // Ak je k rovné 0 alebo n, binomický koeficient je 1
+        return 1; // Návratová hodnota 1
+    else 
+        return BinKoefDnC(n-1, k-1) + BinKoefDnC(n-1, k); // Rekurzívny výpočet binomického koeficientu
+}
+
+// Funkcia na výpočet binomického koeficientu pomocou dynamického programovania
+int BinKoefDP(int n, int k){
+    int bk[n+1][n+1]; // Deklarácia dvojrozmerného poľa pre ukladanie binomických koeficientov
+    int i, j; // Deklarácia premenných pre slučky
+    bk[0][0] = 1; // Inicializácia binomického koeficientu pre n=0 a k=0
+
+    for(i = 1; i <= n; i++){ // Cyklenie od 1 po n
+        bk[i][0] = 1; // Binomický koeficient pre k=0 je vždy 1
+        bk[i][i] = 1; // Binomický koeficient pre k=n je vždy 1
+        for(j = 1; j < i; j++) // Cyklenie od 1 po i-1 pre výpočet vnútorných binomických koeficientov
+            bk[i][j] = bk[i-1][j-1] + bk[i-1][j]; // Výpočet binomického koeficientu podľa Pascalovho trojuholníka
+    } 
+    return bk[n][k]; // Návrat binomického koeficientu pre dané n a k
+}
+
+
+
+fibonacci.c:
+#include "fibonacci.h" // Zahrnutie vlastného hlavičkového súboru pre Fibonacciho funkcie
+
+// Funkcia na výpočet Fibonacciho čísla pomocou rekurzie (Rozdeliť a panuj)
+int FibDnC(int n){
+    if(n == 0) return 0; // Ak je n rovné 0, vrátiť 0
+    if(n == 1) return 1; // Ak je n rovné 1, vrátiť 1
+    else return FibDnC(n-1) + FibDnC(n-2); // Rekurzívny výpočet Fibonacciho čísla
+}
+
+// Funkcia na výpočet Fibonacciho čísla pomocou dynamického programovania (tabulácia)
+int FibDP(int n){
+    int fib[n+1];          // Deklarácia poľa na uloženie Fibonacciho čísel
+    int i;                 // Deklarácia premenné pre slučku
+    fib[0] = 0;            // Inicializácia Fibonacciho čísla pre n=0
+    fib[1] = 1;            // Inicializácia Fibonacciho čísla pre n=1
+    for(i = 2; i <= n; i++) // Cyklenie od 2 po n
+        fib[i] = fib[i-1] + fib[i-2]; // Výpočet Fibonacciho čísla podľa predchádzajúcich dvoch čísel
+    return fib[n];         // Návrat Fibonacciho čísla pre dané n
+}
+
+// Funkcia na výpočet Fibonacciho čísla pomocou optimalizovaného dynamického programovania
+int FibDP2(int n){
+    int i1, i2, z; // Deklarácia premenných na uloženie predchádzajúcich dvoch Fibonacciho čísel a aktuálneho výsledku
+    int i;          // Deklarácia premenné pre slučku
+    i1 = 1;         // Inicializácia prvého predchádzajúceho čísla na 1 (Fibonacci(n-1))
+    i2 = 0;         // Inicializácia druhého predchádzajúceho čísla na 0 (Fibonacci(n-2))
+    z = 0;          // Inicializácia aktuálneho výsledku na 0
+    if(n == 1) return 1; // Ak je n rovné 1, vrátiť 1
+    for(i = 2; i <= n; i++){ // Cyklenie od 2 po n
+        z = i1 + i2;  // Výpočet aktuálneho Fibonacciho čísla ako súčet dvoch predchádzajúcich
+        i2 = i1;      // Posunutie predchádzajúcich čísel: i2 sa stáva predchádzajúcim i1
+        i1 = z;        // Posunutie predchádzajúcich čísel: i1 sa stáva aktuálnym z
+    }
+    return z; // Návrat Fibonacciho čísla pre dané n
+}
+
+
+
+matrix.c:
+#include <limits.h>              // Zahrnutie hlavičkového súboru pre limity celočíselných typov
+#include "matrix.h"              // Zahrnutie vlastného hlavičkového súboru pre matice
+
+// Funkcia na výpočet minimálneho počtu násobení reťazca matíc
+int chainMatrixMultiplication(int *r, int n)
+{
+    int m[n+1][n+1];             // Deklarácia dvojrozmerného poľa pre ukladanie minimálnych nákladov
+    int i, j, k, l, q;           // Deklarácia premenných pre slučky a dočasné hodnoty
+
+    // Inicializácia diagonálnych prvkov matice m na 0
+    for (i = 1; i <= n; i++)      // Prechádzanie od 1 do n
+        m[i][i] = 0;               // Nastavenie nákladov na násobenie jednej matice na 0
+
+    // l - dĺžka reťazca matíc
+    for (l = 1; l < n; l++) {     // Prechádzanie rôznych dĺžok reťazca matíc
+        for (i = 1; i <= n - l; i++) { // Prechádzanie po všetkých možných počiatočných indexoch
+            j = i + l;                 // Výpočet koncového indexu pre aktuálny reťazec
+            m[i][j] = INT_MAX;         // Inicializácia aktuálneho nákladu na maximálnu možnú hodnotu
+
+            // Hľadanie optimálneho rozdelenia reťazca matíc
+            for (k = i; k < j; k++) { // Prechádzanie všetkých možných rozdelení medzi i a j
+                // Výpočet nákladov pre aktuálne rozdelenie
+                q = m[i][k] + m[k+1][j] + r[i-1] * r[k] * r[j];
+                if (q < m[i][j])         // Ak je aktuálny náklad menší než uložený náklad
+                    m[i][j] = q;         // Aktualizácia minimálneho nákladu pre reťazec od i po j
+            }
+        }
+    }
+
+    // Návrat minimálneho nákladu na násobenie všetkých matíc v reťazci
+    return m[1][n];                    // Vrátenie výsledku z matice m pre reťazec od 1 po n
+}
+
+
+
+maxmin.c:
+#include "maxmin.h" // Zahrnutie vlastného hlavičkového súboru pre definíciu typu pair
+
+#ifndef MAX
+#define MAX(a,b) ((a)>(b)?a:b) // Definícia makra MAX, ktoré vracia väčšiu z dvoch hodnôt
+#endif
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?a:b) // Definícia makra MIN, ktoré vracia menšiu z dvoch hodnôt
+#endif
+
+// Funkcia na nájdenie maximálnej a minimálnej hodnoty v poli pomocou rozdeľ a panuj prístupu
+pair MaxMin(int A[], int L, int H)
+{
+    pair ret, left, right; // Deklarácia premenných typu pair pre výsledok, ľavú a pravú polovicu
+    int mid; // Deklarácia premennej pre stredný index
+
+    if(L == H) // Ak je dolný index rovný hornému indexu, pole obsahuje jeden prvok
+    {
+        ret.min = ret.max = A[L]; // Nastavenie min aj max na jediný prvok
+    } 
+    else if(H == L + 1) // Ak sú dolný a horný index susediace, pole obsahuje dva prvky
+    {
+        if(A[L] > A[H]) // Porovnanie dvoch prvkov
+        {
+            ret.max = A[L]; // Väčší prvok je max
+            ret.min = A[H]; // Menší prvok je min
+        } 
+        else
+        {
+            ret.max = A[H]; // Väčší prvok je max
+            ret.min = A[L]; // Menší prvok je min
+        }
+    } 
+    else // Ak pole obsahuje viac ako dva prvky
+    {
+        mid = (L + H) / 2; // Výpočet stredného indexu
+        left = MaxMin(A, L, mid); // Rekurzívne nájdenie min a max v ľavej polovici
+        right = MaxMin(A, mid + 1, H); // Rekurzívne nájdenie min a max v pravej polovici
+
+        ret.max = MAX(left.max, right.max); // Určenie väčšieho z dvoch max hodnôt
+        ret.min = MIN(left.min, right.min); // Určenie menšieho z dvoch min hodnôt
+    }
+
+    return ret; // Návratová hodnota obsahujúca min a max hodnoty
+}
+
+
+heapsort.c:
+#include <stdio.h> // Zahrnutie štandardnej knižnice pre vstup a výstup
+
+static int debug = 0; // Globálna premenná pre zapnutie alebo vypnutie režimu ladenia
+
+// Funkcia na nastavenie režimu ladenia
+void hsortDebug(int dbg){
+     debug = dbg; // Priradenie hodnoty dbg do globálnej premennej debug
+}
+
+// Funkcia na výpis stavu haldy
+void printHeap(int a[], int last, int n, char *txt){
+    int i, j, k;
+    k = 1; j = 0; // Inicializácia premenných pre riadenie výstupu
+    printf("====== %s ==================\n", txt); // Výpis nadpisu s textom
+    for(i = 1; i <= last; i++){ // Prechod cez prvky haldy od 1 po last
+        printf("%2d ", a[i]); // Výpis aktuálneho prvku s formátovaním
+        j++; // Inkrementácia počítadla prvkov v riadku
+        if(j == k || i == last){ // Kontrola, či sa má ukončiť riadok
+            printf("\n"); // Prechod na nový riadok
+            j = 0; // Reset počítadla prvkov v riadku
+            k = k * 2; // Násobenie k pre ďalší riadok
+        }
+    }
+    for(i = last + 1; i <= n; i++){ // Prechod cez zvyšné prvky po last až po n
+        if(i == last + 1) printf("[ "); // Začiatok zoznamu zvyšných prvkov
+        printf("%2d ", a[i]); // Výpis aktuálneho prvku
+        if(i == n) printf("]\n"); // Ukončenie zoznamu, ak je posledný prvok
+    }
+    printf("----------------------------------------\n"); // Výpis oddelovača
+}
+
+// Funkcia na udržiavanie vlastnosti haldy pre daný koreň
+void heapify(int a[], int root, int last)
+{
+    int maxChild, temp;
+    if(root * 2 > last) return; // Ak má koreň viac detí než last, koniec rekurzie
+    if(root * 2 == last) maxChild = root * 2; // Ak má koreň len jedno dieťa
+    else if(a[root * 2] > a[root * 2 + 1]) maxChild = root * 2; // Vybrať väčšie dieťa
+    else maxChild = root * 2 + 1; // Vybrať väčšie dieťa
+
+    if(a[root] < a[maxChild]) // Ak je koreň menší ako jeho najväčšie dieťa
+    {
+        temp = a[root]; // Dočasné uloženie hodnoty koreňa
+        a[root] = a[maxChild]; // Výmena hodnôt medzi koreňom a najväčším dieťaťom
+        a[maxChild] = temp; // Priradenie dočasnej hodnoty späť dieťaťu
+        heapify(a, maxChild, last); // Rekurzívne volanie heapify pre najväčšie dieťa
+    }
+}
+
+// Funkcia na triedenie haldy
+void heapSort(int a[], int n)
+{
+    int i, temp;
+    char pom[128]; // Dočasné pole pre textové správy
+
+    // Budovanie haldy (preusporiadanie poľa)
+    for (i = (n / 2); i > 0; i--){ // Prechod od posledného rodiča po koreň
+        heapify(a, i, n); // Udržiavanie vlastnosti haldy pre každý podstrom
+    }
+    if(debug) printHeap(a, n, n, "Po uprave na HEAP"); // Výpis haldy po jej vytvorení, ak je ladenie zapnuté
+    for (i = n; i > 1; i--)
+    {
+        temp = a[1]; // Uloženie hodnoty koreňa (najväčší prvok)
+        a[1] = a[i]; // Presunutie posledného prvku na koreň haldy
+        a[i] = temp; // Umiesťovanie najväčšieho prvku na koniec poľa
+        heapify(a, 1, i - 1); // Udržiavanie vlastnosti haldy po výmene
+        if(debug){
+            sprintf(pom, "Po a[1]<->a[%d] a uprave na HEAP", i); // Vytvorenie správy pre výpis
+            printHeap(a, i - 1, n, pom); // Výpis haldy po každej iterácii, ak je ladenie zapnuté
+        }
+    }
+}
+
+
+
+quicksort.c:
+#include <stdlib.h>  // Zahrnutie štandardnej knižnice pre dynamickú pamäť a náhodné čísla
+#include <stdio.h>   // Zahrnutie štandardnej knižnice pre vstup a výstup
+
+static int qdebug = 0; // Globálna premenná pre zapnutie alebo vypnutie režimu ladenia
+
+// Funkcia na nastavenie režimu ladenia pre rýchle triedenie
+void qsortDebug(int ano){
+     qdebug = ano; // Priradenie hodnoty 'ano' do globálnej premennej 'qdebug'
+}
+
+// Funkcia na výpis stavu počiatočného rozdelenia poľa počas rýchleho triedenia
+void PrintPartition(int a[], int lo, int hi, int median, int left, int right){
+   int i;
+   printf("x=%2d:  [ ", median); // Výpis mediánu a začiatok zoznamu
+   if(right < lo) printf("] "); // Ak pravý index je menší ako dolný, zatvorenie zoznamu
+   for(i = lo; i <= hi; i++){ // Prechod cez pole od 'lo' po 'hi'
+       if(i == left) printf("[ "); // Začiatok ľavého segmentu
+       printf("%2d ", a[i]);       // Výpis aktuálneho prvku s formátovaním
+       if(i == right) printf("] "); // Koniec pravého segmentu
+   }
+   if(left > hi) printf("[ "); // Začiatok zoznamu, ak ľavý index je väčší než horný
+   printf("]\n"); // Ukončenie zoznamu a prechod na nový riadok
+}
+
+// Funkcia na získanie náhodného čísla medzi 'lo' a 'hi' (vrátane)
+int GetRandom(int lo, int hi){
+    return lo + rand() % (hi - lo + 1); // Vráti náhodné číslo v rozsahu [lo, hi]
+}
+
+// Implementácia rýchleho triedenia pomocou rozdeľ a panuj prístupu
+void quicksort(int a[], int lo, int hi)
+{
+   int left, right, median, temp;
+
+   if(hi <= lo) return; // Ak je horný index menší alebo rovný dolnému, ukončiť rekurziu
+   /* aspoň 2 prvky */
+   left = lo; 
+   right = hi;
+   median = a[GetRandom(lo, hi)]; // Výber mediánu náhodným spôsobom
+   /* rozdelenie a[lo..hi],  a[lo..left-1] <= median a a[right+1..hi] >= median */
+   while(right >= left){
+       while(a[left] < median) left++;   // Nájsť prvý prvok väčší alebo rovný mediánu zľava
+       while(a[right] > median) right--; // Nájsť prvý prvok menší alebo rovný mediánu zprava
+       if(left > right) break; // Ak sa indexy prekrývajú, ukončiť cyklus
+       // Výmena prvkov
+       temp = a[left]; 
+       a[left] = a[right]; 
+       a[right] = temp;
+       left++; 
+       right--;
+   }
+   if(qdebug) PrintPartition(a, lo, hi, median, left, right); // Výpis rozdelenia, ak je ladenie zapnuté
+   /* rozdeľ a panuj */
+   quicksort(a, lo, right); // Rekurzívne triedenie ľavého segmentu
+   quicksort(a, left, hi);  // Rekurzívne triedenie pravého segmentu
+}
+
+
+
+sort.c:
+#include <stdio.h>           // Zahrnutie štandardnej knižnice pre vstup a výstup
+#include "sort.h"            // Zahrnutie vlastného hlavičkového súboru pre triedenie
+
+// Funkcia na výpis poľa po každej iterácii
+void PrintArray(int array[], int array_size, int iteration)
+{
+    int index; // Deklarácia premennej na indexovanie poľa
+    for (index = 1; index <= array_size; index++) // Prechod cez všetky prvky poľa od 1 po array_size
+    {
+        printf("%2d ", array[index]); // Výpis aktuálneho prvku poľa s formátovaním
+    }
+    printf("\n"); // Prechod na nový riadok po výpise celého poľa
+}
+
+// Funkcia na bublinové triedenie
+void bubbleSort(int array[], int array_size, int direction)
+{
+    int outer_index, inner_index;      // Deklarácia indexov pre vonkajšiu a vnútornú slučku
+    int temporary_value;               // Dočasná premenná pre výmenu hodnôt
+
+    for (outer_index = 1; outer_index <= array_size; outer_index++) // Vonkajšia slučka pre každý prvok poľa
+    {
+        for (inner_index = array_size; inner_index > outer_index; inner_index--) // Vnútorná slučka pre porovnávanie a výmenu prvkov
+        {
+            // Porovnanie a výmena prvkov podľa smeru triedenia
+            if ((direction == ASC && array[inner_index - 1] > array[inner_index]) || // Ak triedime vzostupne a predchádzajúci prvok je väčší
+                (direction == DSC && array[inner_index - 1] < array[inner_index]))   // Alebo ak triedime zostupne a predchádzajúci prvok je menší
+            {
+                // Výmena miest prvkov
+                temporary_value = array[inner_index - 1];          // Uloženie hodnoty predchádzajúceho prvku do dočasnej premennej
+                array[inner_index - 1] = array[inner_index];       // Presunutie aktuálneho prvku na pozíciu predchádzajúceho
+                array[inner_index] = temporary_value;              // Presunutie dočasnej hodnoty na aktuálnu pozíciu
+            }
+        }
+        // Zobraziť pole po každej iterácii vonkajšej slučky
+        PrintArray(array, array_size, outer_index); // Volanie funkcie na výpis poľa
+    }
+}
+
+// Funkcia na vkladacie triedenie
+void insertSort(int *array, int array_size, int direction) {
+    for (int outer_index = 1; outer_index < array_size; outer_index++) { // Prechod cez pole od druhého prvku
+        int current_value = array[outer_index]; // Uloženie aktuálneho prvku, ktorý sa bude vkladať
+        int inner_index = outer_index - 1;     // Inicializácia indexu pre vnútornú slučku
+
+        // Podmienka pre triedenie podľa smeru
+        int condition = (direction == ASC) ? (array[inner_index] > current_value) : (array[inner_index] < current_value); // Nastavenie podmienky porovnania podľa smeru
+
+        // Vkladanie prvku na správnu pozíciu
+        while (inner_index >= 0 && condition) { // Pokračovať, kým nie sme na začiatku poľa a podmienka je splnená
+            array[inner_index + 1] = array[inner_index]; // Posunutie prvku doprava
+            inner_index--; // Posun indexu o krok dozadu
+            // Aktualizácia podmienky v závislosti od smeru
+            condition = (direction == ASC) ? (array[inner_index] > current_value) : (array[inner_index] < current_value); // Aktualizácia podmienky pre ďalšie porovnanie
+        }
+
+        array[inner_index + 1] = current_value; // Vloženie aktuálneho prvku na správnu pozíciu
+        // Zobraziť pole po každej iterácii vonkajšej slučky
+        PrintArray(array, array_size, outer_index); // Volanie funkcie na výpis poľa
+    }
+}
+
+// Funkcia na výberové triedenie
+void selectionSort(int array[], int array_size, int direction) {
+    for (int outer_index = 0; outer_index < array_size - 1; outer_index++) { // Prechod cez pole od začiatku po predposledný prvok
+        int extreme_index = outer_index; // Inicializácia indexu extrémneho prvku (min alebo max)
+
+        // Hľadanie extrémneho prvku (najmenší alebo najväčší) v nezoradenom podpoli
+        for (int inner_index = outer_index + 1; inner_index < array_size; inner_index++) { // Prechod cez nezoradené prvky
+            int condition = (direction == ASC) ? (array[inner_index] < array[extreme_index]) : (array[inner_index] > array[extreme_index]); // Nastavenie podmienky porovnania podľa smeru
+            if (condition) { // Ak je podmienka splnená
+                extreme_index = inner_index; // Aktualizácia indexu extrémneho prvku
+            }
+        }
+
+        // Výmena extrémneho prvku s prvým prvkom nezoradeného podpolia
+        if (extreme_index != outer_index) { // Ak extrémny prvok nie je na správnej pozícii
+            int temporary_value = array[outer_index]; // Uloženie hodnoty aktuálneho prvku do dočasnej premennej
+            array[outer_index] = array[extreme_index]; // Presunutie extrémneho prvku na jeho správnu pozíciu
+            array[extreme_index] = temporary_value; // Presunutie pôvodného prvku na pozíciu extrému
+        }
+
+        // Zobraziť pole po každej iterácii vonkajšej slučky
+        PrintArray(array, array_size, outer_index + 1); // Volanie funkcie na výpis poľa
+    }
+}
+
+
+
+
+hashtable.c:
+#include <stdio.h>        // Zahrnutie štandardnej knižnice pre vstup a výstup
+#include <stdlib.h>       // Zahrnutie štandardnej knižnice pre dynamickú pamäť
+#include <string.h>       // Zahrnutie štandardnej knižnice pre prácu so stringmi
+#include "hashtable.h"    // Zahrnutie vlastného hlavičkového súboru pre hash tabuľku
+
+// Funkcia na výpočet hash hodnoty pre daný kľúč
+unsigned int Hash(char *key, int htsize){
+    int i;
+    unsigned int value = 0; // Inicializácia hash hodnoty na 0
+    for(i = 0; i < strlen(key); i++) // Prechádzanie každým znakom kľúča
+        value = (value << 5) + key[i]; // Posun hodnôt a pridanie aktuálneho znaku
+    return value % htsize; // Návrat hash hodnoty modulo veľkosť hash tabuľky
+}
+
+// Funkcia na inicializáciu hash tabuľky
+PHASHTABLE HTinit(int size){
+    int i;
+    PHASHTABLE ht = malloc(sizeof(HASHTABLE)); // Alokácia pamäte pre hash tabuľku
+    ht->size = size; // Nastavenie veľkosti hash tabuľky
+    ht->table = malloc(size * sizeof(PNODE)); // Alokácia pamäte pre pole ukazovateľov na uzly
+    for(i = 0; i < size; i++) // Inicializácia každej pozície tabuľky na NULL
+        ht->table[i] = NULL;
+    return ht; // Návrat inicializovanej hash tabuľky
+}
+
+// Funkcia na vloženie kľúča do hash tabuľky
+void HTinsert(PHASHTABLE t, char* key){
+     unsigned int h;
+     PNODE ptr, tmp;
+     h = Hash(key, t->size); // Výpočet hash hodnoty pre kľúč
+     if(t->table[h] == NULL){ // Ak je príslušná pozícia prázdna
+         tmp = malloc(sizeof(NODE)); // Alokácia pamäte pre nový uzol
+         tmp->key = key; // Nastavenie kľúča v novom uzle
+         tmp->next = NULL; // Nastavenie ukazovateľa na ďalší uzol na NULL
+         t->table[h] = tmp; // Priradenie nového uzla do hash tabuľky
+     } else {
+         ptr = t->table[h]; // Nastavenie ukazovateľa na prvý uzol v reťazci
+         while(ptr->next != NULL){ // Prechádzanie reťazcom uzlov
+             // Zabezpečenie, že sa nevkladá duplicitný kľúč
+             if(strcmp(key, ptr->key) == 0) return; // Ak kľúče sú rovnaké, ukončiť funkciu
+             ptr = ptr->next; // Prechod na ďalší uzol
+           }
+         // Zabezpečenie, že sa nevkladá duplicitný kľúč
+         if(strcmp(key, ptr->key) == 0) return; // Ak kľúče sú rovnaké, ukončiť funkciu
+         tmp = malloc(sizeof(NODE)); // Alokácia pamäte pre nový uzol
+         tmp->key = key; // Nastavenie kľúča v novom uzle
+         tmp->next = NULL; // Nastavenie ukazovateľa na ďalší uzol na NULL
+         ptr->next = tmp; // Priradenie nového uzla na koniec reťazca
+     }
+}
+
+// Funkcia na kontrolu, či kľúč patrí do hash tabuľky
+int HTmember(PHASHTABLE t, char* key){
+     unsigned int h;
+     PNODE ptr;
+     h = Hash(key, t->size); // Výpočet hash hodnoty pre kľúč
+     if(t->table[h] == NULL) return 0; // Ak je príslušná pozícia prázdna, kľúč nepatrí
+     ptr = t->table[h]; // Nastavenie ukazovateľa na prvý uzol v reťazci
+     while(ptr != NULL){ // Prechádzanie reťazcom uzlov
+         if(strcmp(key, ptr->key) == 0) return 1; // Ak sa kľúče zhodujú, kľúč patrí
+         ptr = ptr->next; // Prechod na ďalší uzol
+         }
+     return 0; // Kľúč nebol nájdený v hash tabuľke
+}
+
+// Funkcia na odstránenie kľúča z hash tabuľky
+void HTdelete(PHASHTABLE t, char* key)
+{
+    // Získanie hash hodnoty pre daný kľúč
+    unsigned int h = Hash(key, t->size);
+    PNODE prev = NULL; // Predchádzajúci uzol, inicializovaný na NULL
+    PNODE curr = t->table[h]; // Aktuálny uzol začína na prvom uzle v reťazci
+
+    // Prehľadávanie zoznamu na danom indexe hash tabuľky
+    while (curr != NULL)
+    {
+        // Ak sa kľúč zhoduje
+        if (strcmp(curr->key, key) == 0)
+        {
+            // Ak je to prvý uzol v reťazci
+            if (prev == NULL)
+            {
+                t->table[h] = curr->next; // Aktualizácia prvého uzla na ďalší
+            }
+            else
+            {
+                prev->next = curr->next; // Preskočenie aktuálneho uzla v reťazci
+            }
+            // Uvoľnenie pamäte pre odstránený uzol
+            free(curr);
+            return; // Ukončenie funkcie po odstránení uzla
+        }
+        prev = curr; // Nastavenie predchádzajúceho uzla na aktuálny
+        curr = curr->next; // Prechod na ďalší uzol
+    }
+}
+
+// Funkcia na výpis obsahu hash tabuľky
+void HTprint(PHASHTABLE t)
+{
+    // Iterácia cez všetky indexy hash tabuľky
+    for (int i = 0; i < t->size; i++)
+    {
+        printf("%d:", i); // Výpis aktuálneho indexu
+        PNODE curr = t->table[i]; // Nastavenie ukazovateľa na prvý uzol v reťazci
+
+        // Prehľadávanie zoznamu na danom indexe
+        while (curr != NULL)
+        {
+            printf(" %s", curr->key); // Výpis kľúča aktuálneho uzla
+            curr = curr->next; // Prechod na ďalší uzol
+        }
+        printf("\n"); // Prechod na nový riadok po výpise celého reťazca
+    }
+}
+
+
+
+lqueue.c:
+// SS 2019, KPI FEI TUKE
+
+#include "lqueue.h"   // Zahrnutie hlavičkového súboru pre implementáciu spojového frontu
+#include "err.h"      // Zahrnutie hlavičkového súboru pre spracovanie chýb
+#include <stdlib.h>   // Zahrnutie štandardnej knižnice pre dynamickú pamäť
+
+struct Node
+{
+    PNode	Next; // Ukazovateľ na ďalší uzol vo fronte
+    TElem	Elem; // Uložený prvok vo fronte
+};
+
+struct LnkQueue
+{
+    PNode	Front; // Ukazovateľ na predný prvok frontu
+    PNode	Rear;  // Ukazovateľ na zadný prvok frontu
+};
+
+// Funkcia na kontrolu, či je front prázdny
+int IsEmptyQueue(LQueue Q)
+{
+    if(Q == NULL) Error("IsEmptyQueue: incorrect queue!"); // Kontrola, či front nie je NULL
+    return Q->Front == NULL; // Vráti TRUE, ak je front prázdny
+}
+
+// Funkcia na vytvorenie nového frontu
+LQueue CreateQueue(void)
+{
+    LQueue Q; // Deklarácia frontu
+    Q = malloc(sizeof(struct LnkQueue)); // Alokácia pamäte pre front
+    if(Q == NULL) Error("CreateQueue: out of memory!"); // Kontrola úspešnosti alokácie
+    Q->Front = NULL; // Inicializácia predného ukazovateľa na NULL
+    Q->Rear = NULL;  // Inicializácia zadného ukazovateľa na NULL
+    return Q; // Návrat vytvoreného frontu
+}
+
+// Odstráni front
+// Prijíma ukazovateľ na LQueue, nie samotný LQueue
+void RemoveQueue(LQueue *PQ)
+{
+    if(PQ == NULL) Error("RemoveQueue: incorrect pointer!"); // Kontrola, či ukazovateľ nie je NULL
+    if(*PQ == NULL) return; // Ak je front už NULL, nič nerobiť
+    LQueue Q = *PQ; // Dereferencovanie ukazovateľa na front
+    MakeEmptyQueue(Q); // Vyprázdnenie frontu
+    free(Q); // Uvoľnenie pamäte frontu
+    *PQ = NULL; // Nastavenie pôvodného ukazovateľa na NULL
+}
+
+// Odstráni všetky prvky z frontu
+void MakeEmptyQueue(LQueue Q)
+{
+    if(Q == NULL) Error("MakeEmptyQueue: incorrect queue!"); // Kontrola, či front nie je NULL
+    while(!IsEmptyQueue(Q)) // Pokračovať, kým front nie je prázdny
+        Dequeue(Q); // Odstrániť prvý prvok z frontu
+}
+
+// Vloží prvok na koniec frontu
+void Enqueue(TElem X, LQueue Q)
+{
+    PNode PNew; // Deklarácia nového uzla
+    if(Q == NULL) Error("Enqueue: incorrect queue!"); // Kontrola, či front nie je NULL
+    PNew = malloc(sizeof(struct Node)); // Alokácia pamäte pre nový uzol
+    if(PNew == NULL) Error("Enqueue: out of memory!"); // Kontrola úspešnosti alokácie
+    PNew->Elem = X; // Nastavenie hodnoty prvku v novom uzle
+    PNew->Next = NULL; // Nastavenie ukazovateľa na ďalší uzol na NULL
+    if(IsEmptyQueue(Q)) Q->Front = PNew; // Ak je front prázdny, nový uzol je aj predný
+    else Q->Rear->Next = PNew; // Inak, pripojiť nový uzol na koniec frontu
+    Q->Rear = PNew; // Aktualizácia zadného ukazovateľa na nový uzol
+}
+
+// Vráti prvok z prednej časti frontu bez jeho odstránenia
+TElem Front(LQueue Q)
+{
+    if(Q == NULL) Error("Front: incorrect queue!"); // Kontrola, či front nie je NULL
+    if(!IsEmptyQueue(Q)) return Q->Front->Elem; // Vrátiť hodnotu predného prvku, ak front nie je prázdny
+    Error("Front: queue empty!"); // Chybové hlásenie, ak je front prázdny
+    return 0; // Návratová hodnota v prípade prázdneho frontu
+}
+
+// Odstráni prvok z prednej časti frontu
+void Dequeue(LQueue Q)
+{
+    if(Q == NULL) Error("Dequeue: incorrect queue!"); // Kontrola, či front nie je NULL
+    if(IsEmptyQueue(Q)) printf("\nDequeue: empty queue"); // Výpis správy, ak je front prázdny
+    else{
+        PNode PFirst = Q->Front; // Uloženie ukazovateľa na prvý uzol
+        if(Q->Front == Q->Rear) Q->Rear = NULL; // Ak je iba jeden uzol vo fronte, nastaviť Rear na NULL
+        Q->Front = Q->Front->Next; // Posunúť predný ukazovateľ na ďalší uzol
+        free(PFirst); // Uvoľniť pamäť odstráneného uzla
+    }
+}
+
+// Odstráni a vráti prvok z prednej časti frontu
+TElem FrontAndDequeue(LQueue Q)
+{
+    if(Q == NULL) Error("FrontAndDequeue: incorrect queue!"); // Kontrola, či front nie je NULL
+    if(!IsEmptyQueue(Q)){
+        TElem R = Q->Front->Elem; // Uloženie hodnoty predného prvku
+        Dequeue(Q); // Odstránenie predného prvku z frontu
+        return R; // Návrat hodnoty odstráneného prvku
+    }
+    Error("FrontAndDequeue: queue empty!"); // Chybové hlásenie, ak je front prázdny
+    return 0; // Návratová hodnota v prípade prázdneho frontu
+}
+
+// Vypíše obsah frontu
+void PrintQueue(LQueue Q)
+{
+    if(Q == NULL) Error("PrintQueue: incorrect queue!"); // Kontrola, či front nie je NULL
+    if(IsEmptyQueue(Q)) printf("Empty queue"); // Výpis správy, ak je front prázdny
+    else{
+        PNode PTmp = Q->Front; // Ukazovateľ na prechod cez front
+        while(PTmp != NULL){ // Prechádzať cez všetky uzly vo fronte
+            printf("%s ", PTmp->Elem); // Výpis hodnoty aktuálneho uzla
+            PTmp = PTmp->Next; // Prechod na ďalší uzol
+        }
+    }
+}
+
+
+
+
+radix.c:
+#include <stdio.h>         // Zahrnutie štandardnej knižnice pre vstup a výstup
+#include <stdlib.h>        // Zahrnutie štandardnej knižnice pre dynamickú pamäť a funkcie ako malloc a free
+#include <string.h>        // Zahrnutie štandardnej knižnice pre prácu so stringmi
+#include "lqueue.h"        // Zahrnutie vlastného hlavičkového súboru pre implementáciu spojových frontov
+
+// Funkcia na Radix Sort pomocou poľa
+void RadixSort(char* A[], int n, int k){
+    char* B[10][n];        // Deklarácia pomocného poľa pre 10 bucketov, každý môže obsahovať n prvkov
+    int pocB[10];          // Pole počítadiel pre každý bucket
+    int x, y;
+    int i, j;
+
+    for(i = 0; i < 10; i++) pocB[i] = 0; // Inicializácia počítadiel bucketov na 0
+
+    for(j = k - 1; j >= 0; j--){         // Prechádzanie od najnižšej po najvyššiu cifru
+        for(i = 0; i < n; i++){          // Prechádzanie všetkých prvkov poľa
+            x = A[i][j] - '0';           // Získanie hodnoty aktuálnej cifry (predpokladá sa, že A[i][j] je číslica)
+            B[x][pocB[x]++] = A[i];     // Pridanie prvku do príslušného bucketu a inkrementácia počítadla
+        }
+        for(y = 0, x = 0; x < 10; x++){  // Prechádzanie všetkých bucketov
+            for(i = 0; i < pocB[x]; i++)  // Prechádzanie všetkých prvkov v aktuálnom bucketu
+                A[y++] = B[x][i];         // Presunutie prvkov z bucketu späť do poľa
+            pocB[x] = 0;                   // Reset počítadla pre aktuálny bucket
+        }
+    }
+}
+
+// Funkcia na Radix Sort pomocou frontov
+void RadixSortQueue(char* A[], int n, int k)
+{
+    int x, i, j;
+    LQueue q;
+    LQueue B[10];           // Pole 10 pomocných frontov pre každý digit (0-9)
+    TElem temp;
+
+    // Vytvorenie hlavného frontu a pomocných frontov
+    q = CreateQueue();      // Vytvorenie hlavného frontu
+    for (i = 0; i < 10; i++)
+    {
+        B[i] = CreateQueue(); // Vytvorenie 10 pomocných frontov pre jednotlivé buckety
+    }
+
+    // Pridanie všetkých prvkov do hlavného frontu
+    for (i = 0; i < n; i++)
+    {
+        Enqueue(A[i], q);     // Vloženie prvku do hlavného frontu
+    }
+
+    // Hlavný cyklus pre triedenie podľa každej cifry od najnižšej po najvyššiu
+    for (j = k - 1; j >= 0; j--)
+    {
+        // Rozdelenie prvkov podľa hodnoty aktuálnej cifry
+        while (!IsEmptyQueue(q))
+        {
+            temp = FrontAndDequeue(q);   // Odstránenie prvku z hlavného frontu
+            x = temp[j] - '0';           // Získanie hodnoty aktuálnej cifry
+            if (x < 0 || x > 9)           // Overenie platnosti cifry (musí byť medzi 0 a 9)
+            {
+                printf("Error: Invalid digit '%c' in element '%s'\n", temp[j], temp); // Výpis chyby pri neplatnej cifre
+                exit(1); // Ukončenie programu s chybovým kódom
+            }
+            Enqueue(temp, B[x]);         // Vloženie prvku do príslušného bucketu (frontu)
+        }
+
+        // Presun prvkov zo všetkých bucketov späť do hlavného frontu v správnom poradí
+        for (x = 0; x < 10; x++)
+        {
+            while (!IsEmptyQueue(B[x]))
+            {
+                Enqueue(FrontAndDequeue(B[x]), q); // Presunutie prvkov z bucketu do hlavného frontu
+            }
+        }
+
+        // Vypísanie stavu frontu a aktualizácia poľa
+        printf("Pass %d: ", k - j); // Výpis aktuálnej iterácie triedenia
+        i = 0;
+        while (!IsEmptyQueue(q))
+        {
+            temp = FrontAndDequeue(q); // Odstránenie prvku z hlavného frontu
+            printf("%s ", temp);       // Výpis aktuálneho prvku
+            A[i++] = temp;             // Aktualizácia poľa s usporiadanými prvkami
+            Enqueue(temp, q);          // Návrat prvku späť do hlavného frontu pre ďalšiu iteráciu
+        }
+        printf("\n"); // Prechod na nový riadok po vypise aktuálneho stavu poľa
+    }
+
+    // Uvoľnenie zdrojov frontov
+    while (!IsEmptyQueue(q))
+    {
+        FrontAndDequeue(q); // Správne uvoľnenie každého prvku z hlavného frontu
+    }
+    RemoveQueue(&q); // Odstránenie hlavného frontu
+
+    for (i = 0; i < 10; i++)
+    {
+        while (!IsEmptyQueue(B[i]))
+        {
+            FrontAndDequeue(B[i]); // Správne uvoľnenie každého prvku z pomocných frontov
+        }
+        RemoveQueue(&B[i]); // Odstránenie pomocných frontov
+    }
+}
+
+
+
+BVS.c:
+// SS 2019, KPI FEI TUKE
+
+#include "BVS.h"         // Inclusion of the header file for Binary Search Tree (BVS) definitions
+#include <stdio.h>       // Standard input and output library
+#include <stdlib.h>      // Standard library for memory allocation and other utilities
+#include <math.h>        // Math library for mathematical functions like pow
+#include <string.h>      // String library for functions like strcmp
+
+// Definition of a node in the Binary Search Tree (BVS)
+struct BVSNode
+{
+    int Item;                // The value stored in the node
+    PtrBVSNode Left;         // Pointer to the left child
+    PtrBVSNode Right;        // Pointer to the right child
+};
+
+// Function to create a new BVS node with a given item (value between 0-99)
+PtrBVSNode BVSCreateNode(int ItemToInsert)
+{
+    PtrBVSNode BVS;
+    BVS = malloc(sizeof(struct BVSNode)); // Allocate memory for the new node
+    if (BVS == NULL)
+    {
+        printf("\nOut of memory!\n");      // Error message if memory allocation fails
+        exit(-1);                           // Exit the program with an error code
+    }
+    if (ItemToInsert < 0 || ItemToInsert > 99)
+    {
+        printf("\nBVSCreateNode: invalid item (0-99): %d!\n", ItemToInsert); // Error for invalid item
+        return NULL; // Return NULL to indicate failure
+    }
+    BVS->Item = ItemToInsert; // Assign the item to the node
+    BVS->Left = NULL;         // Initialize the left child to NULL
+    BVS->Right = NULL;        // Initialize the right child to NULL
+    return BVS;               // Return the newly created node
+}
+
+// Function to create a BVS tree with a given item as the root
+PtrBVSNode BVSCreateTree(int ItemToInsert)
+{
+    return BVSCreateNode(ItemToInsert); // Create and return the root node
+}
+
+// Function to insert an item into the BVS
+PtrBVSNode BVSInsert(PtrBVSNode Root, int ItemToInsert)
+{
+    if (Root == NULL)
+    {
+        return BVSCreateNode(ItemToInsert); // If the tree is empty, create a new node
+    }
+    if (ItemToInsert < Root->Item)
+    {
+        Root->Left = BVSInsert(Root->Left, ItemToInsert); // Insert into the left subtree
+    }
+    else if (ItemToInsert > Root->Item)
+    {
+        Root->Right = BVSInsert(Root->Right, ItemToInsert); // Insert into the right subtree
+    }
+    // If the item is already present, do not insert duplicates
+    return Root; // Return the (possibly unchanged) root
+}
+
+// Function to search for an item in the BVS
+// Returns 1 if the item exists, 0 otherwise
+int BVSMember(PtrBVSNode Root, int ItemToFind)
+{
+    if (Root == NULL)
+    {
+        return 0; // Item not found
+    }
+    if (Root->Item == ItemToFind)
+    {
+        return 1; // Item found
+    }
+    if (ItemToFind < Root->Item)
+    {
+        return BVSMember(Root->Left, ItemToFind); // Search in the left subtree
+    }
+    else
+    {
+        return BVSMember(Root->Right, ItemToFind); // Search in the right subtree
+    }
+}
+
+// In-order traversal of the BVS
+// Visits left subtree, current node, then right subtree
+void BVSPrintInOrder(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        return; // Base case: empty subtree
+    }
+    BVSPrintInOrder(Root->Left);          // Traverse left subtree
+    printf("%d ", Root->Item);            // Visit current node
+    BVSPrintInOrder(Root->Right);         // Traverse right subtree
+}
+
+// Pre-order traversal of the BVS
+// Visits current node, then left subtree, then right subtree
+void BVSPrintPreOrder(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        return; // Base case: empty subtree
+    }
+    printf("%d ", Root->Item);            // Visit current node
+    BVSPrintPreOrder(Root->Left);         // Traverse left subtree
+    BVSPrintPreOrder(Root->Right);        // Traverse right subtree
+}
+
+// Post-order traversal of the BVS
+// Visits left subtree, right subtree, then current node
+void BVSPrintPostOrder(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        return; // Base case: empty subtree
+    }
+    BVSPrintPostOrder(Root->Left);        // Traverse left subtree
+    BVSPrintPostOrder(Root->Right);       // Traverse right subtree
+    printf("%d ", Root->Item);            // Visit current node
+}
+
+// Function to calculate the number of nodes in the BVS
+int BVSTreeSize(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        return 0; // Base case: empty subtree
+    }
+    return 1 + BVSTreeSize(Root->Left) + BVSTreeSize(Root->Right); // Count current node plus left and right subtrees
+}
+
+// Helper function to get the maximum level (height) of the BVS
+int BVSGetLevel(PtrBVSNode Root, int Level)
+{
+    int LMax = Level; // Current level for the left subtree
+    int RMax = Level; // Current level for the right subtree
+    if (Root->Left != NULL)
+    {
+        LMax = BVSGetLevel(Root->Left, Level + 1); // Get level of the left subtree
+    }
+    if (Root->Right != NULL)
+    {
+        RMax = BVSGetLevel(Root->Right, Level + 1); // Get level of the right subtree
+    }
+    return (LMax > RMax) ? LMax : RMax; // Return the greater of the two levels
+}
+
+// Function to get the height of the BVS
+int BVSGetMaxLevel(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        return 0; // An empty tree has height 0
+    }
+    else
+    {
+        return BVSGetLevel(Root, 1); // Start counting levels from 1
+    }
+}
+
+// Function to print all nodes at a specific level in the BVS
+void BVSPrintLevel(PtrBVSNode Root, int LevelToPrint, int StartLevel)
+{
+    if (Root == NULL)
+    {
+        return; // Base case: empty subtree
+    }
+    if (LevelToPrint == StartLevel)
+    {
+        printf("%d ", Root->Item); // Print the item if the current level matches the target level
+    }
+    if (Root->Left != NULL)
+    {
+        BVSPrintLevel(Root->Left, LevelToPrint, StartLevel + 1); // Traverse the left subtree
+    }
+    if (Root->Right != NULL)
+    {
+        BVSPrintLevel(Root->Right, LevelToPrint, StartLevel + 1); // Traverse the right subtree
+    }
+}
+
+// Function to perform level-order traversal (breadth-first) of the BVS
+void BVSPrintLevelOrder(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        return; // Base case: empty tree
+    }
+    int i;
+    int MaxLevel = BVSGetMaxLevel(Root); // Get the height of the tree
+    for (i = 1; i <= MaxLevel; i++)
+    {
+        BVSPrintLevel(Root, i, 1); // Print all nodes at each level
+    }
+}
+
+// Function to find the minimum item in the BVS
+int BVSGetMinItem(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        printf("\nNo Tree!\n"); // Error message if the tree is empty
+        exit(-1); // Exit the program with an error code
+    }
+    if (Root->Left == NULL)
+    {
+        return Root->Item; // The leftmost node contains the minimum item
+    }
+    else
+    {
+        return BVSGetMinItem(Root->Left); // Recursively find the minimum in the left subtree
+    }
+}
+
+// Function to find the maximum item in the BVS
+int BVSGetMaxItem(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        printf("\nNo Tree!\n"); // Error message if the tree is empty
+        exit(-1); // Exit the program with an error code
+    }
+    if (Root->Right == NULL)
+    {
+        return Root->Item; // The rightmost node contains the maximum item
+    }
+    else
+    {
+        return BVSGetMaxItem(Root->Right); // Recursively find the maximum in the right subtree
+    }
+}
+
+// Function to delete and free all nodes in the BVS
+void BVSDeleteTree(PtrBVSNode* PtrRoot)
+{
+    PtrBVSNode Root = (PtrBVSNode)*PtrRoot;
+    if (Root == NULL)
+    {
+        return; // Base case: empty subtree
+    }
+    if (Root->Left != NULL)
+    {
+        BVSDeleteTree(&Root->Left); // Recursively delete the left subtree
+    }
+    if (Root->Right != NULL)
+    {
+        BVSDeleteTree(&Root->Right); // Recursively delete the right subtree
+    }
+    printf(" deleting %d\n", Root->Item); // Print a message indicating deletion
+    free(Root); // Free the memory allocated for the current node
+    *PtrRoot = NULL; // Set the pointer to NULL to avoid dangling references
+}
+
+// Function to delete a specific item from the BVS
+int BVSDeleteItem(PtrBVSNode* PtrRoot, int ItemToDelete)
+{
+    PtrBVSNode Root = (PtrBVSNode)*PtrRoot;
+    if (Root == NULL)
+    {
+        return 0; // Item not found
+    }
+    if (ItemToDelete < Root->Item)
+    {
+        return BVSDeleteItem(&Root->Left, ItemToDelete); // Search and delete in the left subtree
+    }
+    if (ItemToDelete > Root->Item)
+    {
+        return BVSDeleteItem(&Root->Right, ItemToDelete); // Search and delete in the right subtree
+    }
+    // If the item is found
+    if (Root->Left == NULL && Root->Right == NULL)
+    {
+        free(Root);          // Free the node if it has no children
+        *PtrRoot = NULL;     // Update the parent pointer to NULL
+        return 1;            // Indicate successful deletion
+    }
+    if (Root->Left == NULL)
+    {
+        *PtrRoot = Root->Right; // Replace the node with its right child
+        free(Root);             // Free the node
+        return 1;               // Indicate successful deletion
+    }
+    if (Root->Right == NULL)
+    {
+        *PtrRoot = Root->Left; // Replace the node with its left child
+        free(Root);            // Free the node
+        return 1;              // Indicate successful deletion
+    }
+    // If the node has two children, find the inorder successor
+    Root->Item = BVSGetMinItem(Root->Right); // Replace the node's item with the minimum item in the right subtree
+    return BVSDeleteItem(&Root->Right, Root->Item); // Delete the inorder successor
+}
+
+// Function to fill an array with tree items at a specific level
+void BVSFillArrLevel(PtrBVSNode Root, int ArrWidth, int Arr[ArrWidth], int LevelToFill, int StartLevel, int Left, int Right)
+{
+    if (Root == NULL)
+    {
+        return; // Base case: empty subtree
+    }
+    if (LevelToFill == StartLevel)
+    {
+        Arr[ArrWidth / 2 - Left + Right] = Root->Item; // Place the item in the appropriate position in the array
+    }
+    if (Root->Left != NULL)
+    {
+        // Calculate the new positions for left and right based on the current level
+        BVSFillArrLevel(Root->Left, ArrWidth, Arr, LevelToFill, StartLevel + 1, Left + ArrWidth / pow(2, StartLevel + 1), Right);
+    }
+    if (Root->Right != NULL)
+    {
+        BVSFillArrLevel(Root->Right, ArrWidth, Arr, LevelToFill, StartLevel + 1, Left, Right + ArrWidth / pow(2, StartLevel + 1));
+    }
+}
+
+// Function to print the array representing a specific level of the tree
+void BVSPrintArrLevel(PtrBVSNode Root, int ArrWidth, int Arr[ArrWidth])
+{
+    int i;
+    char form[4] = "%d"; // Format string for printing integers
+    char spc[3] = " ";    // Space string for formatting
+    if (BVSGetMaxItem(Root) > 9)
+    {
+        strcpy(form, "%2d"); // Adjust format if numbers are larger than single digits
+        strcpy(spc, "  ");    // Adjust spacing accordingly
+    }
+    for (i = 1; i < ArrWidth; i++)
+    {
+        if (Arr[i] != -1)
+        {
+            printf(form, Arr[i]); // Print the item with appropriate formatting
+        }
+        else
+        {
+            printf("%s", spc);    // Print spaces for empty positions
+        }
+    }
+}
+
+// Function to clear the array by setting all elements to -1
+void BVSClearArray(int ArrWidth, int Arr[ArrWidth])
+{
+    int i;
+    for (i = 0; i < ArrWidth; i++)
+    {
+        Arr[i] = -1; // Initialize all positions to -1 indicating empty
+    }
+}
+
+// Function to print the BVS in a tree-like structure
+void BVSPrintTree(PtrBVSNode Root)
+{
+    if (Root == NULL)
+    {
+        return; // Base case: empty tree
+    }
+    int i;
+    int MaxLevel = BVSGetMaxLevel(Root); // Get the height of the tree
+    int ArrWidth = pow(2, MaxLevel);     // Calculate the width of the array based on the maximum level
+    int Arr[ArrWidth];                   // Array to hold items at each level
+    printf("\n");                        // Print a newline for better formatting
+    for (i = 1; i <= MaxLevel; i++)
+    {
+        BVSClearArray(ArrWidth, Arr);                     // Clear the array before filling it
+        BVSFillArrLevel(Root, ArrWidth, Arr, i, 1, 0, 0); // Fill the array with items at the current level
+        BVSPrintArrLevel(Root, ArrWidth, Arr);             // Print the array representing the current level
+        if (i != MaxLevel)
+        {
+            printf("\n"); // Print a newline between levels, except after the last level
+        }
+    }
+}
