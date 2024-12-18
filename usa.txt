@@ -1081,375 +1081,370 @@ void RadixSortQueue(char* A[], int n, int k)
 BVS.c:
 // SS 2019, KPI FEI TUKE
 
-#include "BVS.h"         // Inclusion of the header file for Binary Search Tree (BVS) definitions
-#include <stdio.h>       // Standard input and output library
-#include <stdlib.h>      // Standard library for memory allocation and other utilities
-#include <math.h>        // Math library for mathematical functions like pow
-#include <string.h>      // String library for functions like strcmp
+#include "BVS.h"           // Zahrnutie hlavičkového súboru pre binárny vyhľadávací strom (BVS)
+#include <stdio.h>         // Zahrnutie štandardnej knižnice pre vstup a výstup
+#include <stdlib.h>        // Zahrnutie štandardnej knižnice pre dynamickú pamäť
+#include <math.h>          // Zahrnutie matematickej knižnice pre funkcie ako pow
+#include <string.h>        // Zahrnutie knižnice pre prácu so stringmi
 
-// Definition of a node in the Binary Search Tree (BVS)
 struct BVSNode
 {
-    int Item;                // The value stored in the node
-    PtrBVSNode Left;         // Pointer to the left child
-    PtrBVSNode Right;        // Pointer to the right child
+    int Item;                // Hodnota uložená v uzle
+    PtrBVSNode Left;         // Ukazovateľ na ľavé dieťa
+    PtrBVSNode Right;        // Ukazovateľ na pravé dieťa
 };
 
-// Function to create a new BVS node with a given item (value between 0-99)
+// Vytvorí nový uzol BVS so zadanou hodnotou (0-99)
 PtrBVSNode BVSCreateNode(int ItemToInsert)
 {
     PtrBVSNode BVS;
-    BVS = malloc(sizeof(struct BVSNode)); // Allocate memory for the new node
+    BVS = malloc(sizeof(struct BVSNode)); // Alokácia pamäte pre nový uzol
     if (BVS == NULL)
     {
-        printf("\nOut of memory!\n");      // Error message if memory allocation fails
-        exit(-1);                           // Exit the program with an error code
+        printf("\nOut of memory!\n");      // Výpis chyby pri nedostatku pamäte
+        exit(-1);                           // Ukončenie programu s chybovým kódom
     }
     if (ItemToInsert < 0 || ItemToInsert > 99)
     {
-        printf("\nBVSCreateNode: invalid item (0-99): %d!\n", ItemToInsert); // Error for invalid item
-        return NULL; // Return NULL to indicate failure
+        printf("\nBVSCreateNode: invalid item (0-99): %d!\n", ItemToInsert); // Výpis chyby pre neplatnú hodnotu
+        return NULL; // Návrat NULL pri neplatnej hodnote
     }
-    BVS->Item = ItemToInsert; // Assign the item to the node
-    BVS->Left = NULL;         // Initialize the left child to NULL
-    BVS->Right = NULL;        // Initialize the right child to NULL
-    return BVS;               // Return the newly created node
+    BVS->Item = ItemToInsert; // Nastavenie hodnoty uzla
+    BVS->Left = NULL;         // Inicializácia ľavého dieťaťa na NULL
+    BVS->Right = NULL;        // Inicializácia pravého dieťaťa na NULL
+    return BVS;               // Návrat nového uzla
 }
 
-// Function to create a BVS tree with a given item as the root
+// Vytvorí strom BVS so zadanou hodnotou v koreni
 PtrBVSNode BVSCreateTree(int ItemToInsert)
 {
-    return BVSCreateNode(ItemToInsert); // Create and return the root node
+    return BVSCreateNode(ItemToInsert); // Vytvorenie koreňového uzla
 }
 
-// Function to insert an item into the BVS
+// Vloží hodnotu do stromu BVS
 PtrBVSNode BVSInsert(PtrBVSNode Root, int ItemToInsert)
 {
     if (Root == NULL)
     {
-        return BVSCreateNode(ItemToInsert); // If the tree is empty, create a new node
+        return BVSCreateNode(ItemToInsert); // Ak je strom prázdny, vytvorí nový uzol
     }
     if (ItemToInsert < Root->Item)
     {
-        Root->Left = BVSInsert(Root->Left, ItemToInsert); // Insert into the left subtree
+        Root->Left = BVSInsert(Root->Left, ItemToInsert); // Vloženie do ľavého podstromu
     }
     else if (ItemToInsert > Root->Item)
     {
-        Root->Right = BVSInsert(Root->Right, ItemToInsert); // Insert into the right subtree
+        Root->Right = BVSInsert(Root->Right, ItemToInsert); // Vloženie do pravého podstromu
     }
-    // If the item is already present, do not insert duplicates
-    return Root; // Return the (possibly unchanged) root
+    return Root; // Návrat koreňového uzla
 }
 
-// Function to search for an item in the BVS
-// Returns 1 if the item exists, 0 otherwise
+// Vyhľadá zadanú hodnotu v strome BVS
+// Vráti 1, ak existuje, 0 inak
 int BVSMember(PtrBVSNode Root, int ItemToFind)
 {
     if (Root == NULL)
     {
-        return 0; // Item not found
+        return 0; // Hodnota nebola nájdená
     }
     if (Root->Item == ItemToFind)
     {
-        return 1; // Item found
+        return 1; // Hodnota bola nájdená
     }
     if (ItemToFind < Root->Item)
     {
-        return BVSMember(Root->Left, ItemToFind); // Search in the left subtree
+        return BVSMember(Root->Left, ItemToFind); // Vyhľadávanie v ľavom podstrome
     }
     else
     {
-        return BVSMember(Root->Right, ItemToFind); // Search in the right subtree
+        return BVSMember(Root->Right, ItemToFind); // Vyhľadávanie v pravom podstrome
     }
 }
 
-// In-order traversal of the BVS
-// Visits left subtree, current node, then right subtree
+// In-order prechod stromu BVS
 void BVSPrintInOrder(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        return; // Base case: empty subtree
+        return; // Základný prípad: prázdny podstrom
     }
-    BVSPrintInOrder(Root->Left);          // Traverse left subtree
-    printf("%d ", Root->Item);            // Visit current node
-    BVSPrintInOrder(Root->Right);         // Traverse right subtree
+    BVSPrintInOrder(Root->Left);          // Prechod ľavého podstromu
+    printf("%d ", Root->Item);            // Výpis hodnoty uzla
+    BVSPrintInOrder(Root->Right);         // Prechod pravého podstromu
 }
 
-// Pre-order traversal of the BVS
-// Visits current node, then left subtree, then right subtree
+// Pre-order prechod stromu BVS
 void BVSPrintPreOrder(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        return; // Base case: empty subtree
+        return; // Základný prípad: prázdny podstrom
     }
-    printf("%d ", Root->Item);            // Visit current node
-    BVSPrintPreOrder(Root->Left);         // Traverse left subtree
-    BVSPrintPreOrder(Root->Right);        // Traverse right subtree
+    printf("%d ", Root->Item);            // Výpis hodnoty uzla
+    BVSPrintPreOrder(Root->Left);         // Prechod ľavého podstromu
+    BVSPrintPreOrder(Root->Right);        // Prechod pravého podstromu
 }
 
-// Post-order traversal of the BVS
-// Visits left subtree, right subtree, then current node
+// Post-order prechod stromu BVS
 void BVSPrintPostOrder(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        return; // Base case: empty subtree
+        return; // Základný prípad: prázdny podstrom
     }
-    BVSPrintPostOrder(Root->Left);        // Traverse left subtree
-    BVSPrintPostOrder(Root->Right);       // Traverse right subtree
-    printf("%d ", Root->Item);            // Visit current node
+    BVSPrintPostOrder(Root->Left);        // Prechod ľavého podstromu
+    BVSPrintPostOrder(Root->Right);       // Prechod pravého podstromu
+    printf("%d ", Root->Item);            // Výpis hodnoty uzla
 }
 
-// Function to calculate the number of nodes in the BVS
+// Vráti počet prvkov v strome BVS
 int BVSTreeSize(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        return 0; // Base case: empty subtree
+        return 0; // Prázdny strom
     }
-    return 1 + BVSTreeSize(Root->Left) + BVSTreeSize(Root->Right); // Count current node plus left and right subtrees
+    return 1 + BVSTreeSize(Root->Left) + BVSTreeSize(Root->Right); // Počet prvkov v ľavom a pravom podstrome plus aktuálny uzol
 }
 
-// Helper function to get the maximum level (height) of the BVS
+// Pomocná funkcia na zistenie maximálnej úrovne (výšky) stromu
 int BVSGetLevel(PtrBVSNode Root, int Level)
 {
-    int LMax = Level; // Current level for the left subtree
-    int RMax = Level; // Current level for the right subtree
+    int LMax = Level; // Aktuálna úroveň pre ľavý podstrom
+    int RMax = Level; // Aktuálna úroveň pre pravý podstrom
     if (Root->Left != NULL)
     {
-        LMax = BVSGetLevel(Root->Left, Level + 1); // Get level of the left subtree
+        LMax = BVSGetLevel(Root->Left, Level + 1); // Zistenie úrovne ľavého podstromu
     }
     if (Root->Right != NULL)
     {
-        RMax = BVSGetLevel(Root->Right, Level + 1); // Get level of the right subtree
+        RMax = BVSGetLevel(Root->Right, Level + 1); // Zistenie úrovne pravého podstromu
     }
-    return (LMax > RMax) ? LMax : RMax; // Return the greater of the two levels
+    return (LMax > RMax) ? LMax : RMax; // Vráti väčšiu z dvoch úrovní
 }
 
-// Function to get the height of the BVS
+// Funkcia na zistenie výšky stromu BVS
 int BVSGetMaxLevel(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        return 0; // An empty tree has height 0
+        return 0; // Prázdny strom má výšku 0
     }
     else
     {
-        return BVSGetLevel(Root, 1); // Start counting levels from 1
+        return BVSGetLevel(Root, 1); // Začína počítanie úrovní od 1
     }
 }
 
-// Function to print all nodes at a specific level in the BVS
+// Funkcia na výpis všetkých uzlov na konkrétnej úrovni v strome BVS
 void BVSPrintLevel(PtrBVSNode Root, int LevelToPrint, int StartLevel)
 {
     if (Root == NULL)
     {
-        return; // Base case: empty subtree
+        return; // Základný prípad: prázdny podstrom
     }
     if (LevelToPrint == StartLevel)
     {
-        printf("%d ", Root->Item); // Print the item if the current level matches the target level
+        printf("%d ", Root->Item); // Výpis hodnoty uzla, ak je aktuálna úroveň požadovaná
     }
     if (Root->Left != NULL)
     {
-        BVSPrintLevel(Root->Left, LevelToPrint, StartLevel + 1); // Traverse the left subtree
+        BVSPrintLevel(Root->Left, LevelToPrint, StartLevel + 1); // Prechod ľavého podstromu
     }
     if (Root->Right != NULL)
     {
-        BVSPrintLevel(Root->Right, LevelToPrint, StartLevel + 1); // Traverse the right subtree
+        BVSPrintLevel(Root->Right, LevelToPrint, StartLevel + 1); // Prechod pravého podstromu
     }
 }
 
-// Function to perform level-order traversal (breadth-first) of the BVS
+// Funkcia na level-order prechod (šírkový) stromu BVS
 void BVSPrintLevelOrder(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        return; // Base case: empty tree
+        return; // Základný prípad: prázdny strom
     }
     int i;
-    int MaxLevel = BVSGetMaxLevel(Root); // Get the height of the tree
+    int MaxLevel = BVSGetMaxLevel(Root); // Zistenie výšky stromu
     for (i = 1; i <= MaxLevel; i++)
     {
-        BVSPrintLevel(Root, i, 1); // Print all nodes at each level
+        BVSPrintLevel(Root, i, 1); // Výpis všetkých uzlov na aktuálnej úrovni
     }
 }
 
-// Function to find the minimum item in the BVS
+// Funkcia na nájdenie minimálnej hodnoty v strome BVS
 int BVSGetMinItem(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        printf("\nNo Tree!\n"); // Error message if the tree is empty
-        exit(-1); // Exit the program with an error code
+        printf("\nNo Tree!\n"); // Výpis chyby, ak je strom prázdny
+        exit(-1); // Ukončenie programu s chybovým kódom
     }
     if (Root->Left == NULL)
     {
-        return Root->Item; // The leftmost node contains the minimum item
+        return Root->Item; // Najmenšia hodnota je na ľavom okraji stromu
     }
     else
     {
-        return BVSGetMinItem(Root->Left); // Recursively find the minimum in the left subtree
+        return BVSGetMinItem(Root->Left); // Rekurzívne hľadanie v ľavom podstrome
     }
 }
 
-// Function to find the maximum item in the BVS
+// Funkcia na nájdenie maximálnej hodnoty v strome BVS
 int BVSGetMaxItem(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        printf("\nNo Tree!\n"); // Error message if the tree is empty
-        exit(-1); // Exit the program with an error code
+        printf("\nNo Tree!\n"); // Výpis chyby, ak je strom prázdny
+        exit(-1); // Ukončenie programu s chybovým kódom
     }
     if (Root->Right == NULL)
     {
-        return Root->Item; // The rightmost node contains the maximum item
+        return Root->Item; // Najväčšia hodnota je na pravom okraji stromu
     }
     else
     {
-        return BVSGetMaxItem(Root->Right); // Recursively find the maximum in the right subtree
+        return BVSGetMaxItem(Root->Right); // Rekurzívne hľadanie v pravom podstrome
     }
 }
 
-// Function to delete and free all nodes in the BVS
+// Funkcia na vymazanie a uvoľnenie pamäte stromu BVS
 void BVSDeleteTree(PtrBVSNode* PtrRoot)
 {
     PtrBVSNode Root = (PtrBVSNode)*PtrRoot;
     if (Root == NULL)
     {
-        return; // Base case: empty subtree
+        return; // Základný prípad: prázdny strom
     }
     if (Root->Left != NULL)
     {
-        BVSDeleteTree(&Root->Left); // Recursively delete the left subtree
+        BVSDeleteTree(&Root->Left); // Rekurzívne vymazanie ľavého podstromu
     }
     if (Root->Right != NULL)
     {
-        BVSDeleteTree(&Root->Right); // Recursively delete the right subtree
+        BVSDeleteTree(&Root->Right); // Rekurzívne vymazanie pravého podstromu
     }
-    printf(" deleting %d\n", Root->Item); // Print a message indicating deletion
-    free(Root); // Free the memory allocated for the current node
-    *PtrRoot = NULL; // Set the pointer to NULL to avoid dangling references
+    printf(" deleting %d\n", Root->Item); // Výpis správy o vymazávaní uzla
+    free(Root); // Uvoľnenie pamäte uzla
+    *PtrRoot = NULL; // Nastavenie ukazovateľa na NULL
 }
 
-// Function to delete a specific item from the BVS
+// Funkcia na odstránenie konkrétnej hodnoty zo stromu BVS
 int BVSDeleteItem(PtrBVSNode* PtrRoot, int ItemToDelete)
 {
     PtrBVSNode Root = (PtrBVSNode)*PtrRoot;
     if (Root == NULL)
     {
-        return 0; // Item not found
+        return 0; // Hodnota nebola nájdená
     }
     if (ItemToDelete < Root->Item)
     {
-        return BVSDeleteItem(&Root->Left, ItemToDelete); // Search and delete in the left subtree
+        return BVSDeleteItem(&Root->Left, ItemToDelete); // Odstránenie z ľavého podstromu
     }
     if (ItemToDelete > Root->Item)
     {
-        return BVSDeleteItem(&Root->Right, ItemToDelete); // Search and delete in the right subtree
+        return BVSDeleteItem(&Root->Right, ItemToDelete); // Odstránenie z pravého podstromu
     }
-    // If the item is found
+    // Ak je hodnota nájdená
     if (Root->Left == NULL && Root->Right == NULL)
     {
-        free(Root);          // Free the node if it has no children
-        *PtrRoot = NULL;     // Update the parent pointer to NULL
-        return 1;            // Indicate successful deletion
+        free(Root);          // Uvoľnenie uzla, ktorý nemá deti
+        *PtrRoot = NULL;     // Nastavenie ukazovateľa na NULL
+        return 1;            // Úspešné odstránenie
     }
     if (Root->Left == NULL)
     {
-        *PtrRoot = Root->Right; // Replace the node with its right child
-        free(Root);             // Free the node
-        return 1;               // Indicate successful deletion
+        *PtrRoot = Root->Right; // Náhrada uzla pravým dieťaťom
+        free(Root);             // Uvoľnenie uzla
+        return 1;               // Úspešné odstránenie
     }
     if (Root->Right == NULL)
     {
-        *PtrRoot = Root->Left; // Replace the node with its left child
-        free(Root);            // Free the node
-        return 1;              // Indicate successful deletion
+        *PtrRoot = Root->Left; // Náhrada uzla ľavým dieťaťom
+        free(Root);            // Uvoľnenie uzla
+        return 1;              // Úspešné odstránenie
     }
-    // If the node has two children, find the inorder successor
-    Root->Item = BVSGetMinItem(Root->Right); // Replace the node's item with the minimum item in the right subtree
-    return BVSDeleteItem(&Root->Right, Root->Item); // Delete the inorder successor
+    // Ak uzol má dve deti, nájde in-order nástupcu
+    Root->Item = BVSGetMinItem(Root->Right); // Nahraď hodnotu uzla minimálnou hodnotou v pravom podstrome
+    return BVSDeleteItem(&Root->Right, Root->Item); // Odstránenie in-order nástupcu
 }
 
-// Function to fill an array with tree items at a specific level
+// Funkcia na naplnenie poľa hodnotami z konkrétnej úrovne stromu
 void BVSFillArrLevel(PtrBVSNode Root, int ArrWidth, int Arr[ArrWidth], int LevelToFill, int StartLevel, int Left, int Right)
 {
     if (Root == NULL)
     {
-        return; // Base case: empty subtree
+        return; // Základný prípad: prázdny podstrom
     }
     if (LevelToFill == StartLevel)
     {
-        Arr[ArrWidth / 2 - Left + Right] = Root->Item; // Place the item in the appropriate position in the array
+        Arr[ArrWidth / 2 - Left + Right] = Root->Item; // Umiestnenie hodnoty uzla do poľa na správnu pozíciu
     }
     if (Root->Left != NULL)
     {
-        // Calculate the new positions for left and right based on the current level
-        BVSFillArrLevel(Root->Left, ArrWidth, Arr, LevelToFill, StartLevel + 1, Left + ArrWidth / pow(2, StartLevel + 1), Right);
+        BVSFillArrLevel(Root->Left, ArrWidth, Arr, LevelToFill, StartLevel + 1, Left + ArrWidth / pow(2, StartLevel + 1), Right); // Rekurzívne naplnenie ľavého podstromu
     }
     if (Root->Right != NULL)
     {
-        BVSFillArrLevel(Root->Right, ArrWidth, Arr, LevelToFill, StartLevel + 1, Left, Right + ArrWidth / pow(2, StartLevel + 1));
+        BVSFillArrLevel(Root->Right, ArrWidth, Arr, LevelToFill, StartLevel + 1, Left, Right + ArrWidth / pow(2, StartLevel + 1)); // Rekurzívne naplnenie pravého podstromu
     }
 }
 
-// Function to print the array representing a specific level of the tree
+// Funkcia na výpis poľa reprezentujúceho konkrétnu úroveň stromu
 void BVSPrintArrLevel(PtrBVSNode Root, int ArrWidth, int Arr[ArrWidth])
 {
     int i;
-    char form[4] = "%d"; // Format string for printing integers
-    char spc[3] = " ";    // Space string for formatting
+    char form[4] = "%d"; // Formátovací reťazec pre výpis čísel
+    char spc[3] = " ";    // Reťazec pre medzeru
     if (BVSGetMaxItem(Root) > 9)
     {
-        strcpy(form, "%2d"); // Adjust format if numbers are larger than single digits
-        strcpy(spc, "  ");    // Adjust spacing accordingly
+        strcpy(form, "%2d"); // Úprava formátu, ak čísla majú viac než jednu číslicu
+        strcpy(spc, "  ");    // Úprava medzier podľa potreby
     }
     for (i = 1; i < ArrWidth; i++)
     {
         if (Arr[i] != -1)
         {
-            printf(form, Arr[i]); // Print the item with appropriate formatting
+            printf(form, Arr[i]); // Výpis hodnoty, ak je prítomná
         }
         else
         {
-            printf("%s", spc);    // Print spaces for empty positions
+            printf("%s", spc);    // Výpis medzier, ak je pozícia prázdna
         }
     }
 }
 
-// Function to clear the array by setting all elements to -1
+// Funkcia na vyčistenie poľa nastavením všetkých prvkov na -1
 void BVSClearArray(int ArrWidth, int Arr[ArrWidth])
 {
     int i;
     for (i = 0; i < ArrWidth; i++)
     {
-        Arr[i] = -1; // Initialize all positions to -1 indicating empty
+        Arr[i] = -1; // Inicializácia všetkých pozícií na -1, čo označuje prázdnu pozíciu
     }
 }
 
-// Function to print the BVS in a tree-like structure
+// Funkcia na výpis stromu BVS v tvare stromu
 void BVSPrintTree(PtrBVSNode Root)
 {
     if (Root == NULL)
     {
-        return; // Base case: empty tree
+        return; // Základný prípad: prázdny strom
     }
     int i;
-    int MaxLevel = BVSGetMaxLevel(Root); // Get the height of the tree
-    int ArrWidth = pow(2, MaxLevel);     // Calculate the width of the array based on the maximum level
-    int Arr[ArrWidth];                   // Array to hold items at each level
-    printf("\n");                        // Print a newline for better formatting
+    int MaxLevel = BVSGetMaxLevel(Root); // Zistenie výšky stromu
+    int ArrWidth = pow(2, MaxLevel);     // Výpočet šírky poľa na základe výšky stromu
+    int Arr[ArrWidth];                   // Pole na uloženie hodnôt na každej úrovni
+    printf("\n");                        // Výpis nového riadku pre lepšie formátovanie
     for (i = 1; i <= MaxLevel; i++)
     {
-        BVSClearArray(ArrWidth, Arr);                     // Clear the array before filling it
-        BVSFillArrLevel(Root, ArrWidth, Arr, i, 1, 0, 0); // Fill the array with items at the current level
-        BVSPrintArrLevel(Root, ArrWidth, Arr);             // Print the array representing the current level
+        BVSClearArray(ArrWidth, Arr);                     // Vyčistenie poľa pred naplnením
+        BVSFillArrLevel(Root, ArrWidth, Arr, i, 1, 0, 0); // Naplnenie poľa hodnotami na aktuálnej úrovni
+        BVSPrintArrLevel(Root, ArrWidth, Arr);             // Výpis hodnot na aktuálnej úrovni
         if (i != MaxLevel)
         {
-            printf("\n"); // Print a newline between levels, except after the last level
+            printf("\n"); // Výpis nového riadku medzi úrovňami, okrem poslednej
         }
     }
 }
+
